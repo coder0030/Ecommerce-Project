@@ -1,0 +1,78 @@
+package sumitproject.SpringCart.Mapper;
+
+import org.springframework.stereotype.Component;
+import sumitproject.SpringCart.DTO.ReviewDTO;
+import sumitproject.SpringCart.Entity.Product;
+import sumitproject.SpringCart.Entity.Review;
+import sumitproject.SpringCart.Entity.User;
+import sumitproject.SpringCart.MyException.BadRequestException;
+import sumitproject.SpringCart.RequestDTO.ReviewRequestDTO;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
+public class ReviewMapper {
+
+    public ReviewDTO toDto(Review review, User user, Product product) {
+        if (review == null) return null;
+
+        ReviewDTO.ReviewDTOBuilder builder = ReviewDTO.builder()
+                .id(review.getId())
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .createdAt(review.getCreatedAt());
+
+        if (user != null) {
+            builder.userId(user.getId())
+                    .userName(user.getName());
+        } else {
+            builder.userId(review.getUserId());
+        }
+
+        if (product != null) {
+            builder.productId(product.getId())
+                    .productName(product.getName());
+        } else {
+            builder.productId(review.getProductId());
+        }
+
+        return builder.build();
+    }
+
+    public Review toEntity(ReviewRequestDTO reviewDTO, Review review) {
+        if (reviewDTO == null) return null;
+
+        if (reviewDTO.getRating() != null) {
+            review.setRating(reviewDTO.getRating());
+        }
+        if (reviewDTO.getComment() != null) {
+            review.setComment(reviewDTO.getComment());
+        }
+
+        return review;
+    }
+
+    public List<ReviewDTO> toDtoList(List<Review> reviews, User user, Product product) {
+        if (reviews == null || reviews.isEmpty()) return null;
+        return reviews.stream()
+                .map(review -> toDto(review, user, product))
+                .collect(Collectors.toList());
+    }
+
+    public Review updateToEntity(ReviewRequestDTO reviewDTO, Review review) {
+        boolean nullValue = false;
+
+        if (reviewDTO.getRating() == null) nullValue = true;
+        if (reviewDTO.getProductId() == null) nullValue = true;
+
+        if (nullValue) {
+            throw new BadRequestException("Incomplete data provided. Rating and product ID are required.");
+        }
+
+        review.setRating(reviewDTO.getRating());
+        review.setComment(reviewDTO.getComment());
+
+        return review;
+    }
+}
