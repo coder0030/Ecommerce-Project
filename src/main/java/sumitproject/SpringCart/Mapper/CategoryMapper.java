@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import sumitproject.SpringCart.DTO.CategoryDTO;
 import sumitproject.SpringCart.Entity.Category;
 import sumitproject.SpringCart.MyException.BadRequestException;
+import sumitproject.SpringCart.RequestDTO.CategoryRequestDTO;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,11 +19,11 @@ public class CategoryMapper {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
-                .parentCategoryId(category.getParentCategoryId())
+                .parentCategoryId(category.getParentCategory().getId())
                 .build();
     }
 
-    public Category toEntity(CategoryDTO categoryDTO, Category category) {
+    public Category toEntity(CategoryRequestDTO categoryDTO, Category category) {
         if (categoryDTO == null) return null;
 
         if (categoryDTO.getName() != null) {
@@ -30,9 +31,6 @@ public class CategoryMapper {
         }
         if (categoryDTO.getDescription() != null) {
             category.setDescription(categoryDTO.getDescription());
-        }
-        if (categoryDTO.getParentCategoryId() != null) {
-            category.setParentCategoryId(categoryDTO.getParentCategoryId());
         }
 
         return category;
@@ -43,7 +41,7 @@ public class CategoryMapper {
         return categories.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    public Category updateToEntity(CategoryDTO categoryDTO, Category category) {
+    public Category updateToEntity(CategoryRequestDTO categoryDTO, Category category) {
         boolean nullValue = false;
 
         if (categoryDTO.getName() == null) nullValue = true;
@@ -55,7 +53,6 @@ public class CategoryMapper {
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
-        category.setParentCategoryId(categoryDTO.getParentCategoryId());
 
         return category;
     }

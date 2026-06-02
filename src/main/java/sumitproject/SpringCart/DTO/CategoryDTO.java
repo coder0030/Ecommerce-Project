@@ -15,9 +15,9 @@ public class CategoryDTO {
     private String name;
     private String description;
     private Long parentCategoryId;
-    private String parentCategoryName;  // Additional field from self-join
-    private List<CategoryDTO> subCategories;  // For hierarchical structure
-    private Integer productCount;  // Computed field
+    private String parentCategoryName;
+    private List<CategoryDTO> subCategories;
+    private Integer productCount;
     private LocalDateTime createdAt;
 
 }
