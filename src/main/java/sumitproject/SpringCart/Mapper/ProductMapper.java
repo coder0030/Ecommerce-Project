@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Component
 public class ProductMapper {
 
-    public ProductDTO toDto(Product product, Category category) {
+    public ProductDTO toDto(Product product) {
         if (product == null) return null;
 
         ProductDTO.ProductDTOBuilder builder = ProductDTO.builder()
@@ -28,11 +28,9 @@ public class ProductMapper {
                 .imageUrl(product.getImageUrl())
                 .isActive(product.getIsActive())
                 .createdAt(product.getCreatedAt())
-                .categoryId(product.getCategoryId());
+                .categoryId(product.getCategory().getId())
+                .categoryName(product.getCategory().getName());
 
-        if (category != null) {
-            builder.categoryName(category.getName());
-        }
 
         return builder.build();
     }
@@ -53,6 +51,7 @@ public class ProductMapper {
         if (productDTO.getStock() != null) {
             product.setStock(productDTO.getStock());
         }
+
         if (productDTO.getImageUrl() != null) {
             product.setImageUrl(productDTO.getImageUrl());
         }
@@ -63,17 +62,16 @@ public class ProductMapper {
         return product;
     }
 
-    public List<ProductDTO> toDtoList(List<Product> products, Category category) {
+    public List<ProductDTO> toDtoList(List<Product> products) {
         if (products == null || products.isEmpty()) return null;
         return products.stream()
-                .map(product -> toDto(product, category))
+                .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     public Product updateToEntity(ProductRequestDTO productDTO, Product product) {
         boolean nullValue = false;
 
-        if (productDTO.getName() == null) nullValue = true;
         if (productDTO.getStock() == null) nullValue = true;
 
         if (nullValue) {
@@ -85,7 +83,6 @@ public class ProductMapper {
         product.setBrand(productDTO.getBrand());
         product.setPrice(productDTO.getPrice());
         product.setDiscount(productDTO.getDiscount());
-        product.setStock(productDTO.getStock());
         product.setImageUrl(productDTO.getImageUrl());
 
         return product;

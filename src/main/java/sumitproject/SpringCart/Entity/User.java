@@ -1,5 +1,6 @@
 package sumitproject.SpringCart.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import sumitproject.SpringCart.Helper.Role;
@@ -9,11 +10,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Table(name = "users")
-@Entity
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +31,9 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "roles")
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
     private Set<Role> roles = new HashSet<>();
 
     @Column(nullable = false)
@@ -41,7 +45,17 @@ public class User {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<Address> addresses = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<Review> reviewList = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<Order> orderList = new HashSet<>();
+
+    @OneToOne
+    private Cart cart;
 
     @PrePersist
     protected void setUp() {
@@ -70,5 +84,15 @@ public class User {
     public void removeAddress(Address address) {
         addresses.remove(address);
         address.setUser(null);
+    }
+
+    public void addReview(Review review) {
+        reviewList.add(review);
+        review.setUser(this);
+    }
+
+    public void removeReview(Review review) {
+        reviewList.remove(review);
+        review.setUser(null);
     }
 }

@@ -11,72 +11,83 @@ import sumitproject.SpringCart.RequestDTO.ReviewRequestDTO;
 import sumitproject.SpringCart.Service.ReviewService;
 
 @RestController
-@RequestMapping("/reviews")
+@RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping("/create/{userId}")
-    public ResponseEntity<ReviewDTO> createReview(@PathVariable Long userId,
-                                                  @Valid @RequestBody ReviewRequestDTO reviewRequestDTO) {
-        ReviewDTO createdReview = reviewService.createReview(userId, reviewRequestDTO);
-        return new ResponseEntity<>(createdReview, HttpStatus.CREATED);
+    @PostMapping("/create")
+    public ResponseEntity<ReviewDTO> createReview(@Valid @RequestBody ReviewRequestDTO request) {
+        ReviewDTO review = reviewService.createReview(request);
+        return new ResponseEntity<>(review, HttpStatus.CREATED);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<Page<ReviewDTO>> getAllReviews(
-            @RequestParam(defaultValue = "0") int pageNo,
-            @RequestParam(defaultValue = "20") int pageSize) {
-        Page<ReviewDTO> reviews = reviewService.getAllReviews(pageNo, pageSize);
-        return new ResponseEntity<>(reviews, HttpStatus.OK);
+    @PutMapping("/{id}")
+    public ResponseEntity<ReviewDTO> updateReview(@PathVariable Long id, @Valid @RequestBody ReviewRequestDTO request) {
+        ReviewDTO review = reviewService.updateReview(id, request);
+        return ResponseEntity.ok(review);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ReviewDTO> getReviewById(@PathVariable Long id) {
-        ReviewDTO reviewDTO = reviewService.getReviewById(id);
-        return new ResponseEntity<>(reviewDTO, HttpStatus.OK);
+        ReviewDTO review = reviewService.getReviewById(id);
+        return ResponseEntity.ok(review);
+    }
+
+    @GetMapping("/user/{userId}/product/{productId}")
+    public ResponseEntity<ReviewDTO> getReviewByUserAndProduct(@PathVariable Long userId, @PathVariable Long productId) {
+        ReviewDTO review = reviewService.getReviewByUserAndProduct(userId, productId);
+        return ResponseEntity.ok(review);
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<Page<ReviewDTO>> getReviewsByProductId(@PathVariable Long productId,
-                                                                 @RequestParam(defaultValue = "0") int pageNo,
-                                                                 @RequestParam(defaultValue = "20") int pageSize) {
-        Page<ReviewDTO> reviews = reviewService.getReviewsByProductId(productId, pageNo, pageSize);
-        return new ResponseEntity<>(reviews, HttpStatus.OK);
+    public ResponseEntity<Page<ReviewDTO>> getReviewsByProductId(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<ReviewDTO> reviews = reviewService.getReviewsByProductId(productId, page, size);
+        return ResponseEntity.ok(reviews);
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<ReviewDTO>> getReviewsByUserId(@PathVariable Long userId,
-                                                              @RequestParam(defaultValue = "0") int pageNo,
-                                                              @RequestParam(defaultValue = "20") int pageSize) {
-        Page<ReviewDTO> reviews = reviewService.getReviewsByUserId(userId, pageNo, pageSize);
-        return new ResponseEntity<>(reviews, HttpStatus.OK);
+    public ResponseEntity<Page<ReviewDTO>> getReviewsByUserId(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<ReviewDTO> reviews = reviewService.getReviewsByUserId(userId, page, size);
+        return ResponseEntity.ok(reviews);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
+        reviewService.deleteReview(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/user/{userId}/product/{productId}")
+    public ResponseEntity<Void> deleteReviewByUserAndProduct(@PathVariable Long userId, @PathVariable Long productId) {
+        reviewService.deleteReviewByUserAndProduct(userId, productId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/product/{productId}/average-rating")
     public ResponseEntity<Double> getAverageRatingForProduct(@PathVariable Long productId) {
         Double averageRating = reviewService.getAverageRatingForProduct(productId);
-        return new ResponseEntity<>(averageRating, HttpStatus.OK);
+        return ResponseEntity.ok(averageRating);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteReviewById(@PathVariable Long id) {
-        reviewService.deleteReviewById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @GetMapping("/product/{productId}/review-count")
+    public ResponseEntity<Long> getReviewCountForProduct(@PathVariable Long productId) {
+        Long reviewCount = reviewService.getReviewCountForProduct(productId);
+        return ResponseEntity.ok(reviewCount);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<ReviewDTO> updateReviewById(@PathVariable Long id,
-                                                      @Valid @RequestBody ReviewRequestDTO reviewRequestDTO) {
-        ReviewDTO updatedReview = reviewService.updateReviewById(id, reviewRequestDTO);
-        return new ResponseEntity<>(updatedReview, HttpStatus.OK);
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<ReviewDTO> partialUpdateReviewById(@PathVariable Long id,
-                                                             @RequestBody ReviewRequestDTO reviewRequestDTO) {
-        ReviewDTO updatedReview = reviewService.partialUpdateReviewById(id, reviewRequestDTO);
-        return new ResponseEntity<>(updatedReview, HttpStatus.OK);
+    @GetMapping("/check")
+    public ResponseEntity<Boolean> hasUserReviewedProduct(
+            @RequestParam Long userId,
+            @RequestParam Long productId) {
+        Boolean hasReviewed = reviewService.hasUserReviewedProduct(userId, productId);
+        return ResponseEntity.ok(hasReviewed);
     }
 }

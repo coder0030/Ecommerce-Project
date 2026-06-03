@@ -3,13 +3,10 @@ package sumitproject.SpringCart.ServiceImpl;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import sumitproject.SpringCart.Entity.Address;
-import sumitproject.SpringCart.Entity.Category;
-import sumitproject.SpringCart.Entity.User;
+import sumitproject.SpringCart.Entity.*;
 import sumitproject.SpringCart.MyException.BadRequestException;
-import sumitproject.SpringCart.Repository.AddressRepository;
-import sumitproject.SpringCart.Repository.CategoryRepository;
-import sumitproject.SpringCart.Repository.UserRepository;
+import sumitproject.SpringCart.MyException.DataNotFoundException;
+import sumitproject.SpringCart.Repository.*;
 
 @RequiredArgsConstructor
 @Component
@@ -17,6 +14,11 @@ public class AllRepositoryMethods {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final OrderServiceRepository orderServiceRepository;
+
     public User getUserById(Long id) {
         User user = userRepository.findByIdAndIsActive(id, true);
         if(user == null) {
@@ -36,14 +38,35 @@ public class AllRepositoryMethods {
     public Address getAddressById(Long id) {
         Address address = addressRepository.findByIdAndUser_IsActive(id, true);
         if(address == null) {
-            new BadRequestException("Address with id: " + id + "not exists");
+            throw new BadRequestException("Address with id: " + id + "not exists");
         }
         return address;
     }
 
     public Category getCategoryById(Long parentCategoryId) {
-      return categoryRepository.findById(parentCategoryId).orElseThrow(() ->
+      return categoryRepository.findByIdAndIsActiveTrue(parentCategoryId).orElseThrow(() ->
           new BadRequestException("ParentCategoryId: " + parentCategoryId + " not found.")
       );
     }
+
+    public Product getProductById(Long id) {
+        Product product = productRepository.findByIdAndIsActiveTrue(id);
+        if(product == null) {
+            throw new BadRequestException("Product id: " + id + " is not exists");
+        }
+        return product;
+    }
+
+    public Cart getCartById(Long id) {
+        Cart cart = cartRepository.findByIdAndIsActiveTrue(id);
+        if(cart == null) {
+            throw new BadRequestException("Cart id: " + id + " not exists");
+        }
+        return cart;
+    }
+
+    public CartItem getCartItemById(Long id) {
+        return cartItemRepository.findById(id).orElseThrow(() -> new DataNotFoundException("CartItem id: " + id + " not exists."));
+    }
+
 }

@@ -17,11 +17,11 @@ public class CouponRequestDTO {
     @NotNull(message = "Discount percentage is required")
     @Min(value = 0, message = "Discount must be at least 0%")
     @Max(value = 100, message = "Discount cannot exceed 100%")
-    private double discountPercent;
+    private Double discountPercent;
 
     @NotNull(message = "Minimum order amount is required")
     @PositiveOrZero(message = "Minimum order amount must be zero or positive")
-    private double minOrderAmount;
+    private Double minOrderAmount;
 
     @NotNull(message = "Expiry date is required")
     @Future(message = "Expiry date must be in the future")

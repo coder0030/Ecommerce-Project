@@ -7,6 +7,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Configuration
 public class AppConfig {
 
@@ -19,4 +22,16 @@ public class AppConfig {
      public ModelMapper modelMapper() {
          return new ModelMapper();
      }
+
+     public String generateTransactionId(Long userId, Long orderId, String paymentMethod) {
+
+         String timePart = LocalDateTime.now()
+                 .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+         return paymentMethod.toUpperCase() + "-" +
+                 userId + "-" +
+                 orderId + "-" +
+                 timePart;
+     }
+
 }

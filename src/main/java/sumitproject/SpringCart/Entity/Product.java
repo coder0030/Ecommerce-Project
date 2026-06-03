@@ -1,24 +1,23 @@
 package sumitproject.SpringCart.Entity;
-import jakarta.persistence.Entity;
-import lombok.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-
+import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
-
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "products")
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "category_id")
-    private Long categoryId;
 
     @Column(nullable = false, length = 200)
     private String name;
@@ -30,9 +29,9 @@ public class Product {
     private String brand;
 
     @Column(nullable = false)
-    private double price;
+    private Double price;
 
-    private double discount;
+    private Double discount;
 
     @Column(nullable = false)
     private Integer stock;
@@ -46,13 +45,35 @@ public class Product {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore
+    private Set<CartItem> cartItemList = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Review> reviews = new HashSet<>();
+
+    public void addCartItem(CartItem cartItem) {
+        cartItemList.add(cartItem);
+        cartItem.setProduct(this);
+    }
+
+    public void removeCartItem(CartItem cartItem) {
+        cartItemList.remove(cartItem);
+        cartItem.setProduct(null);
+    }
 
     @PrePersist
     protected void setUp() {
         createdAt = LocalDateTime.now();
-        isActive = true;
+        if (isActive == null) isActive = true;
+        if (discount == null) discount = 0.0;
     }
+
+
 }

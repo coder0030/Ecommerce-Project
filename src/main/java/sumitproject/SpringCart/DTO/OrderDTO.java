@@ -1,11 +1,9 @@
 package sumitproject.SpringCart.DTO;
-import java.time.LocalDateTime;
-import java.util.List;
 
 import lombok.*;
-import jakarta.persistence.*;
 import sumitproject.SpringCart.Helper.OrderStatus;
-
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -15,15 +13,22 @@ public class OrderDTO {
     private Long id;
     private Long userId;
     private String userName;
-    private AddressDTO address;
-    private double totalAmount;
-    private double discountAmount;
-    private double finalAmount;
+    private String couponCode;
+    private Double totalAmount;
+    private Double discountAmount;
+    private Double finalAmount;
     private OrderStatus status;
-    private List<OrderItemDTO> items;
-    private PaymentDTO payment;
-    private CouponDTO appliedCoupon;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private String deliveryName;
+    private String deliveryPhone;
+    private String deliveryStreet;
+    private String deliveryCity;
+    private String deliveryState;
+    private String deliveryPincode;
+    private String deliveryCountry;
+
+    private List<OrderItemDTO> orderItems;
+    private PaymentDTO payment;
 }

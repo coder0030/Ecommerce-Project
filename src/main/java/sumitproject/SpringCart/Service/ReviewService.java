@@ -1,28 +1,30 @@
 package sumitproject.SpringCart.Service;
 
-import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Component;
 import sumitproject.SpringCart.DTO.ReviewDTO;
 import sumitproject.SpringCart.RequestDTO.ReviewRequestDTO;
+import org.springframework.data.domain.Page;
 
-@Component
 public interface ReviewService {
-    Page<ReviewDTO> getAllReviews(int pageNo, int pageSize);
 
-    ReviewDTO createReview(Long userId, @Valid ReviewRequestDTO reviewRequestDTO);
+    ReviewDTO createReview(ReviewRequestDTO request);
+
+    ReviewDTO updateReview(Long id, ReviewRequestDTO request);
 
     ReviewDTO getReviewById(Long id);
+
+    ReviewDTO getReviewByUserAndProduct(Long userId, Long productId);
 
     Page<ReviewDTO> getReviewsByProductId(Long productId, int pageNo, int pageSize);
 
     Page<ReviewDTO> getReviewsByUserId(Long userId, int pageNo, int pageSize);
 
+    void deleteReview(Long id);
+
+    void deleteReviewByUserAndProduct(Long userId, Long productId);
+
     Double getAverageRatingForProduct(Long productId);
 
-    void deleteReviewById(Long id);
+    Long getReviewCountForProduct(Long productId);
 
-    ReviewDTO updateReviewById(Long id, @Valid ReviewRequestDTO reviewRequestDTO);
-
-    ReviewDTO partialUpdateReviewById(Long id, ReviewRequestDTO reviewRequestDTO);
+    boolean hasUserReviewedProduct(Long userId, Long productId);
 }

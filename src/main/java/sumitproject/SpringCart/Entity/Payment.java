@@ -8,7 +8,8 @@ import sumitproject.SpringCart.Helper.PaymentStatus;
 import java.time.LocalDateTime;
 
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,9 +19,6 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "order_id", unique = true)
-    private Long orderId;
 
     @Column(nullable = false)
     private double amount;
@@ -39,4 +37,13 @@ public class Payment {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    private Order order;
+
+    @PrePersist
+    protected void onCreate() {
+        paidAt = LocalDateTime.now();
+        status = PaymentStatus.PENDING;
+    }
 }

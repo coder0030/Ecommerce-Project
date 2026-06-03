@@ -27,7 +27,6 @@ public class CouponMapper {
                 .isActive(coupon.getIsActive())
                 .createdAt(coupon.getCreatedAt());
 
-        // Calculate if coupon is valid
         boolean isValid = coupon.getIsActive() != null && coupon.getIsActive() &&
                 coupon.getExpiryDate() != null &&
                 !coupon.getExpiryDate().isBefore(LocalDate.now()) &&

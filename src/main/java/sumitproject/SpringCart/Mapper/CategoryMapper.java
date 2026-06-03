@@ -13,14 +13,23 @@ import java.util.stream.Collectors;
 public class CategoryMapper {
 
     public CategoryDTO toDto(Category category) {
-        if (category == null) return null;
+        if (category == null) {
+            return null;
+        }
 
-        return CategoryDTO.builder()
-                .id(category.getId())
-                .name(category.getName())
-                .description(category.getDescription())
-                .parentCategoryId(category.getParentCategory().getId())
-                .build();
+        CategoryDTO dto = new CategoryDTO();
+
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+        dto.setDescription(category.getDescription());
+
+        if (category.getParentCategory() != null) {
+            dto.setParentCategoryId(category.getParentCategory().getId());
+        } else {
+            dto.setParentCategoryId(null);
+        }
+
+        return dto;
     }
 
     public Category toEntity(CategoryRequestDTO categoryDTO, Category category) {

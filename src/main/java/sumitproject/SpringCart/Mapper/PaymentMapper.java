@@ -13,25 +13,22 @@ import java.util.stream.Collectors;
 @Component
 public class PaymentMapper {
 
-    public PaymentDTO toDto(Payment payment, Order order) {
+    public PaymentDTO toDto(Payment payment) {
         if (payment == null) return null;
 
-        PaymentDTO.PaymentDTOBuilder builder = PaymentDTO.builder()
-                .id(payment.getId())
-                .amount(payment.getAmount())
-                .paymentMethod(payment.getPaymentMethod())
-                .status(payment.getStatus())
-                .transactionId(payment.getTransactionId())
-                .paidAt(payment.getPaidAt());
+        PaymentDTO dto = new PaymentDTO();
+        dto.setId(payment.getId());
+        dto.setAmount(payment.getAmount());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setStatus(payment.getStatus());
+        dto.setTransactionId(payment.getTransactionId());
+        dto.setPaidAt(payment.getPaidAt());
 
-        if (order != null) {
-            builder.orderId(order.getId())
-                    .orderNumber("ORD-" + order.getId());
-        } else {
-            builder.orderId(payment.getOrderId());
+        if (payment.getOrder() != null) {
+            dto.setOrderId(payment.getOrder().getId());
         }
 
-        return builder.build();
+        return dto;
     }
 
     public Payment toEntity(PaymentRequestDTO paymentDTO, Payment payment) {
@@ -48,20 +45,6 @@ public class PaymentMapper {
         return payment;
     }
 
-    public List<PaymentDTO> toDtoList(List<Payment> payments, List<Order> orders) {
-        if (payments == null || payments.isEmpty()) return null;
-
-        return payments.stream()
-                .map(payment -> {
-                    Order order = orders != null ?
-                            orders.stream()
-                            .filter(o -> o.getId().equals(payment.getOrderId()))
-                            .findFirst()
-                            .orElse(null) : null;
-                    return toDto(payment, order);
-                })
-                .collect(Collectors.toList());
-    }
 
     public Payment updateToEntity(PaymentRequestDTO paymentDTO, Payment payment) {
         boolean nullValue = false;

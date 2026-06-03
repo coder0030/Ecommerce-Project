@@ -20,4 +20,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByParentCategory_IdAndIsActiveTrue(Long parentId);
 
     boolean existsByParentCategory_IdAndIsActiveTrue(Long id);
+
+    Optional<Category> findByIdAndIsActiveTrue(Long parentCategoryId);
 }

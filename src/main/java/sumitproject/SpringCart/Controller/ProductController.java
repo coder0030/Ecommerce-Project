@@ -57,8 +57,8 @@ public class ProductController {
     }
 
     @GetMapping("/filter-by-price")
-    public ResponseEntity<Page<ProductDTO>> getProductsByPriceRange(@RequestParam BigDecimal minPrice,
-                                                                    @RequestParam BigDecimal maxPrice,
+    public ResponseEntity<Page<ProductDTO>> getProductsByPriceRange(@RequestParam Double minPrice,
+                                                                    @RequestParam Double maxPrice,
                                                                     @RequestParam(defaultValue = "0") int pageNo,
                                                                     @RequestParam(defaultValue = "20") int pageSize) {
         Page<ProductDTO> products = productService.getProductsByPriceRange(minPrice, maxPrice, pageNo, pageSize);

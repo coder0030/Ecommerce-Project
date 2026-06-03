@@ -3,24 +3,24 @@ package sumitproject.SpringCart.Service;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Component;
 import sumitproject.SpringCart.DTO.CartDTO;
-import sumitproject.SpringCart.RequestDTO.CartItemRequestDTO;
-import sumitproject.SpringCart.RequestDTO.UpdateCartItemRequestDTO;
+import sumitproject.SpringCart.RequestDTO.CartRequestDTO;
 
 @Component
 public interface CartService {
-    CartDTO createCart(Long userId);
+
+    CartDTO createCart(CartRequestDTO request);
 
     CartDTO getCartById(Long id);
 
     CartDTO getCartByUserId(Long userId);
 
-    CartDTO addItemToCart(Long cartId, @Valid CartItemRequestDTO cartItemRequestDTO);
-
-    CartDTO updateCartItem(Long cartId, @Valid UpdateCartItemRequestDTO updateRequest);
-
-    CartDTO removeItemFromCart(Long cartId, Long cartItemId);
+    CartDTO getCartWithItems(Long cartId);
 
     void clearCart(Long cartId);
 
     double getCartTotal(Long cartId);
+
+    CartDTO reactivateCart(Long userId);
+
+    void deleteCart(Long cartId);
 }

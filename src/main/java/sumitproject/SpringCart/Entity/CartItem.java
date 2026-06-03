@@ -1,34 +1,49 @@
 package sumitproject.SpringCart.Entity;
-import jakarta.persistence.Entity;
-import lombok.*;
-import jakarta.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
-
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "cart_items")
+@Table(name = "cart_items", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"cart_id", "product_id"})
+})
 public class CartItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "cart_id")
-    private Long cartId;
-
-    @Column(name = "product_id")
-    private Long productId;
 
     @Column(nullable = false)
     private Integer quantity;
 
     @Column(nullable = false)
-    private double price;
+    private Double price;
 
     @Column(updatable = false)
     private LocalDateTime addedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)  // Use LAZY fetching
+    @JoinColumn(name = "cart_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore
+    private Cart cart;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Product product;
+
+    @PrePersist
+    protected void onCreate() {
+        addedAt = LocalDateTime.now();
+        if (quantity == null) quantity = 1;
+    }
 }

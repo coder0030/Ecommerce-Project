@@ -70,4 +70,33 @@ public class PaymentController {
         PaymentDTO refundedPayment = paymentService.refundPayment(id);
         return new ResponseEntity<>(refundedPayment, HttpStatus.OK);
     }
+
+    @PutMapping("/{orderId}/success")
+    public ResponseEntity<String> markPaymentSuccess(
+            @PathVariable Long orderId,
+            @RequestParam String transactionId) {
+
+        paymentService.updatePaymentToSuccess(orderId, transactionId);
+
+        return ResponseEntity.ok("Payment marked as successful.");
+    }
+
+    @PutMapping("/{orderId}/failed")
+    public ResponseEntity<String> markPaymentFailed(
+            @PathVariable Long orderId,
+            @RequestParam String failureReason) {
+
+        paymentService.updatePaymentToFailed(orderId, failureReason);
+
+        return ResponseEntity.ok("Payment marked as failed.");
+    }
+
+    @GetMapping("/{orderId}/pending")
+    public ResponseEntity<Boolean> isPaymentPending(
+            @PathVariable Long orderId) {
+
+        return ResponseEntity.ok(
+                paymentService.isPaymentPending(orderId)
+        );
+    }
 }

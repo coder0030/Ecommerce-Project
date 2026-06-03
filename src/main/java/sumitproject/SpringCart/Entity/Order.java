@@ -1,49 +1,89 @@
 package sumitproject.SpringCart.Entity;
-import jakarta.persistence.Entity;
-import lombok.*;
+
 import jakarta.persistence.*;
+import lombok.*;
+import sumitproject.SpringCart.Helper.OrderStatus;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "coupons")
+@Table(name = "orders")
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 50)
-    private String code;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "discount_percent", nullable = false)
-    private double discountPercent;
+    @ManyToOne
+    @JoinColumn(name = "coupon_id", nullable = true)
+    private Coupon coupon;
 
-    @Column(name = "min_order_amount")
-    private double minOrderAmount;
+    @Column(nullable = false)
+    private String deliveryName;
 
-    @Column(name = "expiry_date", nullable = false)
-    private double expiryDate;
+    @Column(nullable = false)
+    private String deliveryPhone;
 
-    @Column(name = "usage_limit")
-    private Integer usageLimit;
+    @Column(nullable = false)
+    private String deliveryStreet;
 
-    @Column(name = "used_count")
-    private Integer usedCount;
+    @Column(nullable = false)
+    private String deliveryCity;
 
-    @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
-    private Boolean isActive;
+    @Column(nullable = false)
+    private String deliveryState;
+
+    @Column(nullable = false)
+    private String deliveryPincode;
+
+    @Column(nullable = false)
+    private String deliveryCountry;
+
+    @Column(nullable = false)
+    private Double totalAmount;
+
+    @Column(columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
+    @Builder.Default
+    private Double discountAmount = 0.0;
+
+    @Column(nullable = false)
+    private Double finalAmount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private OrderStatus status = OrderStatus.PENDING;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<OrderItem> orderItems = new ArrayList<>();
+
     @PrePersist
-    protected void setUp() {
+    protected void onCreate() {
         createdAt = LocalDateTime.now();
-        isActive = true;
+        updatedAt = LocalDateTime.now();
+        if (status == null) status = OrderStatus.PENDING;
+        if (discountAmount == null) discountAmount = 0.0;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

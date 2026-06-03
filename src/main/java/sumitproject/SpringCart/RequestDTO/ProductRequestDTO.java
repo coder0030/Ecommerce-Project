@@ -21,11 +21,11 @@ public class ProductRequestDTO {
 
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
-    private double price;
+    private Double  price;
 
     @DecimalMin(value = "0", message = "Discount cannot be negative")
     @DecimalMax(value = "100", message = "Discount cannot exceed 100%")
-    private double discount;
+    private Double  discount;
 
     @NotNull(message = "Stock is required")
     @PositiveOrZero(message = "Stock must be zero or positive")

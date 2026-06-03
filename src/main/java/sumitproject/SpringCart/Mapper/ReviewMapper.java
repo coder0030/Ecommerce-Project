@@ -14,30 +14,26 @@ import java.util.stream.Collectors;
 @Component
 public class ReviewMapper {
 
-    public ReviewDTO toDto(Review review, User user, Product product) {
+    public ReviewDTO toDto(Review review) {
         if (review == null) return null;
 
-        ReviewDTO.ReviewDTOBuilder builder = ReviewDTO.builder()
-                .id(review.getId())
-                .rating(review.getRating())
-                .comment(review.getComment())
-                .createdAt(review.getCreatedAt());
+        ReviewDTO dto = new ReviewDTO();
+        dto.setId(review.getId());
+        dto.setRating(review.getRating());
+        dto.setComment(review.getComment());
+        dto.setCreatedAt(review.getCreatedAt());
 
-        if (user != null) {
-            builder.userId(user.getId())
-                    .userName(user.getName());
-        } else {
-            builder.userId(review.getUserId());
+        if (review.getUser() != null) {
+            dto.setUserId(review.getUser().getId());
+            dto.setUserName(review.getUser().getName());
         }
 
-        if (product != null) {
-            builder.productId(product.getId())
-                    .productName(product.getName());
-        } else {
-            builder.productId(review.getProductId());
+        if (review.getProduct() != null) {
+            dto.setProductId(review.getProduct().getId());
+            dto.setProductName(review.getProduct().getName());
         }
 
-        return builder.build();
+        return dto;
     }
 
     public Review toEntity(ReviewRequestDTO reviewDTO, Review review) {
@@ -51,13 +47,6 @@ public class ReviewMapper {
         }
 
         return review;
-    }
-
-    public List<ReviewDTO> toDtoList(List<Review> reviews, User user, Product product) {
-        if (reviews == null || reviews.isEmpty()) return null;
-        return reviews.stream()
-                .map(review -> toDto(review, user, product))
-                .collect(Collectors.toList());
     }
 
     public Review updateToEntity(ReviewRequestDTO reviewDTO, Review review) {

@@ -1,9 +1,6 @@
 package sumitproject.SpringCart.DTO;
-import java.time.LocalDateTime;
-import java.util.List;
 
 import lombok.*;
-
 
 @Data
 @Builder
@@ -11,12 +8,11 @@ import lombok.*;
 @AllArgsConstructor
 public class OrderItemDTO {
     private Long id;
-    private Long productId;
     private Long orderId;
+    private Long productId;
     private String productName;
     private String productImage;
     private Integer quantity;
-    private double priceAtPurchase;
-    private double subtotal;
-
+    private Double priceAtPurchase;
+    private Double subtotal;
 }

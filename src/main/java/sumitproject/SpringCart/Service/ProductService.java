@@ -19,8 +19,7 @@ public interface ProductService {
     Page<ProductDTO> getProductsByCategory(Long categoryId, int pageNo, int pageSize);
 
     Page<ProductDTO> searchProducts(String keyword, int pageNo, int pageSize);
-
-    Page<ProductDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, int pageNo, int pageSize);
+    Page<ProductDTO> getProductsByPriceRange(Double minPrice, Double maxPrice,int pageNo, int pageSize);
 
     Page<ProductDTO> getInStockProducts(int pageNo, int pageSize);
 

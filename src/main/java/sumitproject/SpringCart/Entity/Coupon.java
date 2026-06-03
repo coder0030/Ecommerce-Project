@@ -1,14 +1,12 @@
 package sumitproject.SpringCart.Entity;
-import jakarta.persistence.Entity;
-import lombok.*;
-import jakarta.persistence.*;
 
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -22,10 +20,10 @@ public class Coupon {
     private String code;
 
     @Column(name = "discount_percent", nullable = false)
-    private double discountPercent;
+    private Double discountPercent;
 
     @Column(name = "min_order_amount")
-    private double minOrderAmount;
+    private Double minOrderAmount;
 
     @Column(name = "expiry_date", nullable = false)
     private LocalDate expiryDate;
@@ -36,9 +34,43 @@ public class Coupon {
     @Column(name = "used_count")
     private Integer usedCount;
 
-    @Column(columnDefinition = "BOOLEAN DEFAULT TRUE")
+    @Column(name = "is_active")
     private Boolean isActive;
 
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (minOrderAmount == null) minOrderAmount = 0.0;
+        if (usageLimit == null) usageLimit = 1;
+        if (usedCount == null) usedCount = 0;
+        if (isActive == null) isActive = true;
+    }
+
+    public boolean isValid() {
+        return isActive &&
+                LocalDate.now().isBefore(expiryDate) &&
+                usedCount < usageLimit;
+    }
+
+    public boolean canApply(Double orderAmount) {
+        return isValid() && orderAmount >= minOrderAmount;
+    }
+
+    public Double applyDiscount(Double orderAmount) {
+        if (!canApply(orderAmount)) {
+            return orderAmount;
+        }
+        Double discount = orderAmount * (discountPercent / 100);
+        return orderAmount - discount;
+    }
+
+    public void incrementUsedCount() {
+        this.usedCount++;
+        if (this.usedCount >= this.usageLimit) {
+            this.isActive = false;
+        }
+    }
 }

@@ -21,7 +21,7 @@ public class CouponDTO {
     private LocalDate expiryDate;
     private Integer usageLimit;
     private Integer usedCount;
-    private Boolean isValid;  // Calculated field
+    private Boolean isValid;
     private Boolean isActive;
     private LocalDateTime createdAt;
 

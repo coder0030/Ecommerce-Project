@@ -30,13 +30,13 @@ public class CartMapper {
         if (user != null) {
             builder.userId(user.getId());
         } else {
-            builder.userId(cart.getUserId());
+            builder.userId(cart.getUser().getId());
         }
 
-        if (items != null) {
-            builder.totalItems(items.stream()
-                    .mapToInt(CartItemDTO::getQuantity)
-                    .sum());
+        if (items != null && !items.isEmpty()) {
+            builder.totalItems(items.size());
+        } else {
+            builder.totalItems(0);
         }
 
         return builder.build();

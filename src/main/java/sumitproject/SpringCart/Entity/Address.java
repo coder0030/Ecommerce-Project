@@ -5,8 +5,12 @@ import jakarta.persistence.Entity;
 import lombok.*;
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
 
-@Data
+
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -33,7 +37,7 @@ public class Address {
     private String country;
 
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isDefault;
+    private Boolean isDefault = false;
 
     private boolean isActive;
 
