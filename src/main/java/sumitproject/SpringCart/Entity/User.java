@@ -3,11 +3,18 @@ package sumitproject.SpringCart.Entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import sumitproject.SpringCart.Helper.AuthProviderType;
 import sumitproject.SpringCart.Helper.Role;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Table(name = "users")
 @Getter
@@ -16,12 +23,11 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
     private String name;
 
     @Column(unique = true, nullable = false, length = 100)
@@ -35,6 +41,9 @@ public class User {
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     private Set<Role> roles = new HashSet<>();
+
+    private Set<AuthProviderType> provider = new HashSet<>();
+    private String providerId;
 
     @Column(nullable = false)
     private boolean isActive = true;
@@ -56,21 +65,6 @@ public class User {
 
     @OneToOne
     private Cart cart;
-
-    @PrePersist
-    protected void setUp() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        isActive = true;
-        if (roles.isEmpty()) {
-            roles.add(Role.CUSTOMER);
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 
     public void addRole(Role role) {
         roles.add(role);
@@ -95,4 +89,32 @@ public class User {
         reviewList.remove(review);
         review.setUser(null);
     }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @PrePersist
+    protected void setUp() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        isActive = true;
+        if (roles.isEmpty()) {
+            roles.add(Role.CUSTOMER);
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
 }

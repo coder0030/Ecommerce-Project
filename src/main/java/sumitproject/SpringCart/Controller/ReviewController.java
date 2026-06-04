@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sumitproject.SpringCart.DTO.ReviewDTO;
 import sumitproject.SpringCart.RequestDTO.ReviewRequestDTO;
@@ -18,12 +19,14 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ReviewDTO> createReview(@Valid @RequestBody ReviewRequestDTO request) {
         ReviewDTO review = reviewService.createReview(request);
         return new ResponseEntity<>(review, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @securityUtil.reviewVerify(#id, authentication)")
     public ResponseEntity<ReviewDTO> updateReview(@PathVariable Long id, @Valid @RequestBody ReviewRequestDTO request) {
         ReviewDTO review = reviewService.updateReview(id, request);
         return ResponseEntity.ok(review);
@@ -36,6 +39,7 @@ public class ReviewController {
     }
 
     @GetMapping("/user/{userId}/product/{productId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<ReviewDTO> getReviewByUserAndProduct(@PathVariable Long userId, @PathVariable Long productId) {
         ReviewDTO review = reviewService.getReviewByUserAndProduct(userId, productId);
         return ResponseEntity.ok(review);
@@ -51,6 +55,7 @@ public class ReviewController {
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<Page<ReviewDTO>> getReviewsByUserId(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
@@ -60,12 +65,14 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
         reviewService.deleteReview(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/user/{userId}/product/{productId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<Void> deleteReviewByUserAndProduct(@PathVariable Long userId, @PathVariable Long productId) {
         reviewService.deleteReviewByUserAndProduct(userId, productId);
         return ResponseEntity.noContent().build();
@@ -84,6 +91,7 @@ public class ReviewController {
     }
 
     @GetMapping("/check")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<Boolean> hasUserReviewedProduct(
             @RequestParam Long userId,
             @RequestParam Long productId) {

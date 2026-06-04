@@ -1,0 +1,20 @@
+           ||   FILTER NAMES :-     ||
+ =============================================
+
+1. ChannelProcessingFilter
+2. SecurityContextPersistenceFilter  ← Manages SecurityContext
+3. ConcurrentSessionFilter
+4. HeaderWriterFilter
+5. CorsFilter
+6. CsrfFilter                         ← CSRF protection
+7. LogoutFilter
+8. UsernamePasswordAuthenticationFilter ← Handles /login POST
+9. BasicAuthenticationFilter
+10. RequestCacheAwareFilter
+11. SecurityContextHolderAwareRequestFilter
+12. AnonymousAuthenticationFilter
+13. SessionManagementFilter
+14. ExceptionTranslationFilter
+15. FilterSecurityInterceptor         ← Checks authorization rules
+    ↓
+Your Controller

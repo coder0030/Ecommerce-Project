@@ -13,4 +13,6 @@ public interface OrderServiceRepository extends JpaRepository<Order, Long> {
     Page<Order> findByStatus(OrderStatus orderStatus, Pageable pageable);
 
     Page<Order> findByOrderItems_Order_Id(Long userId, Pageable pageable);
+
+    boolean existsByIdAndUser_IdAndUser_IsActiveTrue(Long orderId, Long id);
 }

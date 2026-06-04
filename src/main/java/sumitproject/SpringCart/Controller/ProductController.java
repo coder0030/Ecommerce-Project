@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sumitproject.SpringCart.DTO.ProductDTO;
 import sumitproject.SpringCart.RequestDTO.ProductRequestDTO;
@@ -20,6 +21,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping("/create/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> createProduct(@PathVariable Long categoryId,
                                                     @Valid @RequestBody ProductRequestDTO productRequestDTO) {
         ProductDTO createdProduct = productService.createProduct(categoryId, productRequestDTO);
@@ -73,12 +75,14 @@ public class ProductController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProductById(@PathVariable Long id) {
         productService.deleteProductById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> updateProductById(@PathVariable Long id,
                                                         @Valid @RequestBody ProductRequestDTO productRequestDTO) {
         ProductDTO updatedProduct = productService.updateProductById(id, productRequestDTO);
@@ -86,6 +90,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> partialUpdateProductById(@PathVariable Long id,
                                                                @RequestBody ProductRequestDTO productRequestDTO) {
         ProductDTO updatedProduct = productService.partialUpdateProductById(id, productRequestDTO);
@@ -93,6 +98,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDTO> updateStock(@PathVariable Long id, @RequestParam Integer quantity) {
         ProductDTO updatedProduct = productService.updateStock(id, quantity);
         return new ResponseEntity<>(updatedProduct, HttpStatus.OK);

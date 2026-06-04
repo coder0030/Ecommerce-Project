@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sumitproject.SpringCart.DTO.CategoryDTO;
 import sumitproject.SpringCart.RequestDTO.CategoryRequestDTO;
@@ -20,6 +21,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody CategoryRequestDTO categoryRequestDTO) {
         CategoryDTO createdCategory = categoryService.createCategory(categoryRequestDTO);
         return new ResponseEntity<>(createdCategory, HttpStatus.CREATED);
@@ -54,12 +56,14 @@ public class CategoryController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategoryById(@PathVariable Long id) {
         categoryService.deleteCategoryById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryDTO> updateCategoryById(@PathVariable Long id,
                                                           @Valid @RequestBody CategoryRequestDTO categoryRequestDTO) {
         CategoryDTO updatedCategory = categoryService.updateCategoryById(id, categoryRequestDTO);
@@ -67,6 +71,7 @@ public class CategoryController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryDTO> partialUpdateCategoryById(@PathVariable Long id,
                                                                  @RequestBody CategoryRequestDTO categoryRequestDTO) {
         CategoryDTO updatedCategory = categoryService.partialUpdateCategoryById(id, categoryRequestDTO);

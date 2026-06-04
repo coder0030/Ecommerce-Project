@@ -12,4 +12,10 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     Cart findByUser_IdAndIsActiveTrue(Long userId);
 
     Cart findByUser_IdAndIsActiveFalse(Long userId);
+
+    boolean existsByCartItems_IdAndUserId(Long cartItemId, Long principalId);
+
+    boolean existsByIdAndUserId(Long cartId, Long principalId);
+
+    boolean existsByIdAndUser_IdAndUser_IsActiveTrue(Long cartId, Long id);
 }

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sumitproject.SpringCart.DTO.OrderDTO;
 import sumitproject.SpringCart.RequestDTO.OrderRequestDTO;
@@ -19,6 +20,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/create/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<OrderDTO> createOrder(@PathVariable Long userId,
                                                 @Valid @RequestBody OrderRequestDTO orderRequestDTO) {
         OrderDTO createdOrder = orderService.createOrder(userId, orderRequestDTO);
@@ -26,6 +28,7 @@ public class OrderController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<OrderDTO>> getAllOrders(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "20") int pageSize) {
@@ -34,12 +37,14 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
         OrderDTO orderDTO = orderService.getOrderById(id);
         return new ResponseEntity<>(orderDTO, HttpStatus.OK);
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<Page<OrderDTO>> getOrdersByUserId(@PathVariable Long userId,
                                                             @RequestParam(defaultValue = "0") int pageNo,
                                                             @RequestParam(defaultValue = "20") int pageSize) {
@@ -48,6 +53,7 @@ public class OrderController {
     }
 
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<OrderDTO>> getOrdersByStatus(@PathVariable String status,
                                                             @RequestParam(defaultValue = "0") int pageNo,
                                                             @RequestParam(defaultValue = "20") int pageSize) {
@@ -56,6 +62,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Long id,
                                                       @Valid @RequestBody UpdateOrderStatusRequestDTO statusRequest) {
         OrderDTO updatedOrder = orderService.updateOrderStatus(id, statusRequest);
@@ -63,6 +70,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('ADMIN') or @securityUtil.orderVerify(#id, authentication)")
     public ResponseEntity<OrderDTO> cancelOrder(@PathVariable Long id,
                                                 @RequestParam(required = false) String reason) {
         OrderDTO cancelledOrder = orderService.cancelOrder(id, reason);
@@ -70,6 +78,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteOrderById(@PathVariable Long id) {
         orderService.deleteOrderById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
