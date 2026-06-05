@@ -215,4 +215,4 @@ Services:
 
 **Sumit**
 Java Backend Developer
-[GitHub](https://github.com/yourusername) · [LinkedIn](https://linkedin.com/in/yourusername)
+[GitHub](https://github.com/coder0030) · [Gmail](mishrasumit0530@gmail.com)
