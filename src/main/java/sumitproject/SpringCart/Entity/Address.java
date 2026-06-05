@@ -5,7 +5,9 @@ import jakarta.persistence.Entity;
 import lombok.*;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -45,4 +47,16 @@ public class Address {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @OneToMany(mappedBy = "address", orphanRemoval = true, cascade = CascadeType.ALL)
+    private Set<Order> orderList = new HashSet<>();
+
+    public void addOrder(Order order) {
+        orderList.add(order);
+        order.setAddress(this);
+    }
+
+    public void removeOrder(Order order) {
+        orderList.remove(order);
+        order.setAddress(null);
+    }
 }

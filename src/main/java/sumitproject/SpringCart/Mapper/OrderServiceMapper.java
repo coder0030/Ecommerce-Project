@@ -33,14 +33,6 @@ public class OrderServiceMapper {
         orderDTO.setCreatedAt(order.getCreatedAt());
         orderDTO.setUpdatedAt(order.getUpdatedAt());
 
-        orderDTO.setDeliveryName(order.getDeliveryName());
-        orderDTO.setDeliveryPhone(order.getDeliveryPhone());
-        orderDTO.setDeliveryStreet(order.getDeliveryStreet());
-        orderDTO.setDeliveryCity(order.getDeliveryCity());
-        orderDTO.setDeliveryState(order.getDeliveryState());
-        orderDTO.setDeliveryPincode(order.getDeliveryPincode());
-        orderDTO.setDeliveryCountry(order.getDeliveryCountry());
-
         if (order.getOrderItems() != null) {
             List<OrderItemDTO> itemDTOs = order.getOrderItems().stream()
                     .map(orderItemMapper::toDto)
@@ -53,17 +45,5 @@ public class OrderServiceMapper {
         }
 
         return orderDTO;
-    }
-
-    public void copyAddressToOrder(Address address, Order order) {
-        if (address == null || order == null) return;
-
-        order.setDeliveryName(address.getStreet());
-        order.setDeliveryPhone(address.getCity());
-        order.setDeliveryStreet(address.getStreet());
-        order.setDeliveryCity(address.getCity());
-        order.setDeliveryState(address.getState());
-        order.setDeliveryPincode(address.getPincode());
-        order.setDeliveryCountry(address.getCountry() != null ? address.getCountry() : "India");
     }
 }

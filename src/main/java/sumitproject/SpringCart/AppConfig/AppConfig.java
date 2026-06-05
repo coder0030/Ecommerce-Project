@@ -1,12 +1,15 @@
 package sumitproject.SpringCart.AppConfig;
 
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,5 +31,19 @@ public class AppConfig {
                  userId + "-" +
                  orderId + "-" +
                  timePart;
+     }
+
+     @Bean
+     public OpenAPI customOpenAPI() {
+         return new OpenAPI()
+                 .info(new Info()
+                         .title("SpringCart API")
+                         .version("1.0.0"))
+                 .addSecurityItem(new SecurityRequirement().addList("Bearer Auth"))
+                 .components(new Components()
+                         .addSecuritySchemes("Bearer Auth", new SecurityScheme()
+                                 .type(SecurityScheme.Type.HTTP)
+                                 .scheme("bearer")
+                                 .bearerFormat("JWT")));
      }
 }

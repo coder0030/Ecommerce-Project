@@ -9,14 +9,18 @@ import org.springframework.stereotype.Service;
 import sumitproject.SpringCart.DTO.AddressDTO;
 import sumitproject.SpringCart.Entity.Address;
 import sumitproject.SpringCart.Entity.User;
+import sumitproject.SpringCart.Helper.OrderStatus;
 import sumitproject.SpringCart.Mapper.AddressMapper;
 import sumitproject.SpringCart.MyException.BadRequestException;
 import sumitproject.SpringCart.Repository.AddressRepository;
+import sumitproject.SpringCart.Repository.OrderServiceRepository;
 import sumitproject.SpringCart.Repository.UserRepository;
 import sumitproject.SpringCart.RequestDTO.AddressRequestDTO;
 import sumitproject.SpringCart.Service.AddressService;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ public class AddressServiceImpl implements AddressService {
     private final AllRepositoryMethods allRepositoryMethods;
     private final AddressMapper addressMapper;
     private final AddressRepository addressRepository;
+    private final OrderServiceRepository orderServiceRepository;
 
     private void resetDefaultAddresses(User user) {
         if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
@@ -51,6 +56,7 @@ public class AddressServiceImpl implements AddressService {
             }
         }
     }
+
 
     @Override
     @Transactional
@@ -127,6 +133,15 @@ public class AddressServiceImpl implements AddressService {
         Address address = allRepositoryMethods.getAddressById(id);
         User user = address.getUser();
 
+        boolean canDeleteOrderAddress = orderServiceRepository.existsByAddress_IdAndAddress_IsActiveTrueAndStatus(
+        id, OrderStatus.PENDING);
+
+        if (!canDeleteOrderAddress) {
+            throw new BadRequestException(
+                    "Cannot delete address. An active order is associated with this address."
+            );
+        }
+
         address.setActive(false);
 
         if (Boolean.TRUE.equals(address.getIsDefault())) {
@@ -148,6 +163,16 @@ public class AddressServiceImpl implements AddressService {
         Address address = allRepositoryMethods.getAddressById(id);
         User user = address.getUser();
 
+        boolean canUpdateOrder = orderServiceRepository.existsByAddress_IdAndAddress_IsActiveTrueAndStatusIn(
+                id, Set.of(OrderStatus.PENDING, OrderStatus.CONFIRMED)
+        );
+
+        if (!canUpdateOrder) {
+            throw new BadRequestException(
+                    "Cannot update address. Order is PENDING or before SHIPPED status can updated."
+            );
+        }
+
         Boolean wasDefault = address.getIsDefault();
 
         address = addressMapper.updateToEntity(addressRequestDTO, address);
@@ -166,6 +191,16 @@ public class AddressServiceImpl implements AddressService {
     public AddressDTO partialUpdateAddressById(Long id, AddressRequestDTO addressRequestDTO) {
         Address address = allRepositoryMethods.getAddressById(id);
         User user = address.getUser();
+
+        boolean canUpdateOrder = orderServiceRepository.existsByAddress_IdAndAddress_IsActiveTrueAndStatusIn(
+                id, Set.of(OrderStatus.PENDING, OrderStatus.CONFIRMED)
+        );
+
+        if (!canUpdateOrder) {
+            throw new BadRequestException(
+                    "Cannot update address. Order is PENDING or before SHIPPED status can updated."
+            );
+        }
 
         if (addressRequestDTO.getCity() != null && !addressRequestDTO.getCity().equals(address.getCity())) {
             address.setCity(addressRequestDTO.getCity());

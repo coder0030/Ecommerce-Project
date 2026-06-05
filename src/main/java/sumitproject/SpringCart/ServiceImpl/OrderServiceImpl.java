@@ -17,6 +17,7 @@ import sumitproject.SpringCart.Mapper.OrderServiceMapper;
 import sumitproject.SpringCart.MyException.BadRequestException;
 import sumitproject.SpringCart.MyException.DataNotFoundException;
 import sumitproject.SpringCart.Repository.*;
+import sumitproject.SpringCart.RequestDTO.AddressUpdateRequestDTO;
 import sumitproject.SpringCart.RequestDTO.OrderRequestDTO;
 import sumitproject.SpringCart.RequestDTO.UpdateOrderStatusRequestDTO;
 import sumitproject.SpringCart.Service.OrderService;
@@ -24,8 +25,8 @@ import sumitproject.SpringCart.Service.PaymentService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
@@ -36,27 +37,140 @@ public class OrderServiceImpl implements OrderService {
     private final CouponRepository couponRepository;
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
-    private final PaymentService paymentService; // Inject PaymentService
-
-    private void reduceProductStock(List<CartItem> cartItemList) {
-        for (CartItem cartItem : cartItemList) {
-            Product product = allRepositoryMethods.getProductById(cartItem.getProduct().getId());
-            int quantity = cartItem.getQuantity();
-
-            if (product.getStock() < quantity) {
-                throw new BadRequestException("Available stock for " + product.getName() + " is: " + product.getStock());
-            }
-
-            product.setStock(product.getStock() - quantity);
-            productRepository.save(product);
-        }
-    }
+    private final PaymentService paymentService;
+    private final AddressRepository addressRepository;
 
     @Override
     @Transactional
     public OrderDTO createOrder(Long userId, OrderRequestDTO request) {
         User user = allRepositoryMethods.getUserById(userId);
+        Cart cart = getActiveCart(userId);
+        Address address = allRepositoryMethods.getAddressById(request.getAddressId());
 
+        double totalAmount = cart.getTotalPrice();
+        Coupon coupon = resolveCoupon(request.getCouponCode(), totalAmount);
+        double discountAmount = calculateDiscount(coupon, totalAmount);
+        double finalAmount = totalAmount - discountAmount;
+
+        Order savedOrder = buildAndSaveOrder(user, address, coupon, totalAmount, discountAmount, finalAmount);
+        attachOrderItems(savedOrder, cart.getCartItems());
+        reduceProductStock(cart.getCartItems());
+        processPayment(savedOrder, request.getPaymentMethod());
+        deactivateCart(cart);
+
+        Payment payment = convertToPaymentEntity(paymentService.getPaymentByOrderId(savedOrder.getId()));
+        return orderServiceMapper.toDto(savedOrder, payment);
+    }
+
+    @Override
+    public Page<OrderDTO> getAllOrders(int pageNo, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("createdAt").descending());
+        return orderServiceRepository.findAll(pageable)
+                .map(this::mapOrderWithPayment);
+    }
+
+    @Override
+    public OrderDTO getOrderById(Long id) {
+        Order order = findOrderById(id);
+        return mapOrderWithPayment(order);
+    }
+
+    @Override
+    public Page<OrderDTO> getOrdersByUserId(Long userId, int pageNo, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("createdAt").descending());
+        return orderServiceRepository.findByUser_Id(userId, pageable)
+                .map(this::mapOrderWithPayment);
+    }
+
+    @Override
+    public Page<OrderDTO> getOrdersByStatus(String status, int pageNo, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("createdAt").descending());
+        OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
+        return orderServiceRepository.findByStatus(orderStatus, pageable)
+                .map(this::mapOrderWithPayment);
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO updateOrderStatus(Long id, UpdateOrderStatusRequestDTO statusRequest) {
+        Order order = findOrderById(id);
+        OrderStatus newStatus = statusRequest.getStatus();
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        if (newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.REFUNDED) {
+            restoreStock(order.getOrderItems());
+            refundIfPaid(id);
+        }
+
+        return mapOrderWithPayment(orderServiceRepository.save(order));
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO cancelOrder(Long id, String reason) {
+        Order order = findOrderById(id);
+        validateCancellable(order);
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        restoreStock(order.getOrderItems());
+        refundIfPaid(id);
+
+        return mapOrderWithPayment(orderServiceRepository.save(order));
+    }
+
+    @Override
+    @Transactional
+    public void deleteOrderById(Long id) {
+        Order order = findOrderById(id);
+
+        boolean isDeletable = order.getStatus() == OrderStatus.CANCELLED
+                || order.getStatus() == OrderStatus.REFUNDED;
+
+        if (!isDeletable) {
+            throw new BadRequestException("Only cancelled or refunded orders can be deleted");
+        }
+
+        orderServiceRepository.delete(order);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAddressById(Long userId, AddressUpdateRequestDTO request) {
+        Address address = allRepositoryMethods.getAddressById(request.getAddressId());
+        Address newAddress = allRepositoryMethods.getAddressById(request.getNewAddressId());
+        Order order = findActiveOrder(request);
+
+        validateAddressHasActiveOrder(address.getId());
+
+        order.setAddress(newAddress);
+
+        if (Boolean.TRUE.equals(address.getIsDefault())) {
+            address.setIsDefault(false);
+            newAddress.setIsDefault(true);
+        }
+
+        address.setActive(false);
+        addressRepository.saveAll(List.of(address, newAddress));
+        orderServiceRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    public void updateAddress(Long userId, AddressUpdateRequestDTO request) {
+        Address newAddress = allRepositoryMethods.getAddressById(request.getNewAddressId());
+        Order order = findActiveOrder(request);
+
+        validateAddressHasActiveOrder(request.getAddressId());
+
+        order.setAddress(newAddress);
+        addressRepository.save(newAddress);
+        orderServiceRepository.save(order);
+    }
+
+    private Cart getActiveCart(Long userId) {
         Cart cart = cartRepository.findByUser_IdAndIsActiveTrue(userId);
         if (cart == null) {
             throw new DataNotFoundException("No active cart found for user");
@@ -64,190 +178,129 @@ public class OrderServiceImpl implements OrderService {
         if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
             throw new BadRequestException("Cart is empty");
         }
+        return cart;
+    }
 
-        Address address = allRepositoryMethods.getAddressById(request.getAddressId());
+    private Coupon resolveCoupon(String couponCode, double totalAmount) {
+        if (couponCode == null || couponCode.isBlank()) return null;
 
-        Coupon coupon = null;
-        double discountAmount = 0.0;
-        double totalAmount = cart.getTotalPrice();
+        Coupon coupon = couponRepository.findValidCouponByCode(couponCode.toUpperCase())
+                .orElseThrow(() -> new BadRequestException("Invalid or expired coupon: " + couponCode));
 
-        if (request.getCouponCode() != null && !request.getCouponCode().isBlank()) {
-            coupon = couponRepository.findValidCouponByCode(request.getCouponCode().toUpperCase())
-                    .orElseThrow(() -> new BadRequestException("Invalid or expired coupon code: " + request.getCouponCode()));
-
-            if (!coupon.canApply(totalAmount)) {
-                throw new BadRequestException("Minimum order amount required: " + coupon.getMinOrderAmount());
-            }
-
-            double finalAfterDiscount = coupon.applyDiscount(totalAmount);
-            discountAmount = totalAmount - finalAfterDiscount;
-
-            coupon.incrementUsedCount();
-            couponRepository.save(coupon);
+        if (!coupon.canApply(totalAmount)) {
+            throw new BadRequestException("Minimum order amount required: " + coupon.getMinOrderAmount());
         }
 
-        double finalAmount = totalAmount - discountAmount;
+        coupon.incrementUsedCount();
+        couponRepository.save(coupon);
+        return coupon;
+    }
 
+    private double calculateDiscount(Coupon coupon, double totalAmount) {
+        if (coupon == null) return 0.0;
+        return totalAmount - coupon.applyDiscount(totalAmount);
+    }
+
+    private Order buildAndSaveOrder(User user, Address address, Coupon coupon,
+                                    double totalAmount, double discountAmount, double finalAmount) {
         Order order = new Order();
         order.setUser(user);
+        order.setAddress(address);
         order.setCoupon(coupon);
         order.setTotalAmount(totalAmount);
         order.setDiscountAmount(discountAmount);
         order.setFinalAmount(finalAmount);
         order.setStatus(OrderStatus.PENDING);
+        return orderServiceRepository.save(order);
+    }
 
-        order.setDeliveryName(address.getStreet());
-        order.setDeliveryPhone(address.getCity());
-        order.setDeliveryStreet(address.getStreet());
-        order.setDeliveryCity(address.getCity());
-        order.setDeliveryState(address.getState());
-        order.setDeliveryPincode(address.getPincode());
-        order.setDeliveryCountry(address.getCountry() != null ? address.getCountry() : "India");
-
-        Order savedOrder = orderServiceRepository.save(order);
-
-        List<OrderItem> orderItems = cart.getCartItems().stream()
+    private void attachOrderItems(Order order, List<CartItem> cartItems) {
+        List<OrderItem> orderItems = cartItems.stream()
                 .map(cartItem -> {
-                    OrderItem orderItem = new OrderItem();
-                    orderItem.setOrder(savedOrder);
-                    orderItem.setProduct(cartItem.getProduct());
-                    orderItem.setQuantity(cartItem.getQuantity());
-                    orderItem.setPriceAtPurchase(cartItem.getPrice());
-                    return orderItem;
+                    OrderItem item = new OrderItem();
+                    item.setOrder(order);
+                    item.setProduct(cartItem.getProduct());
+                    item.setQuantity(cartItem.getQuantity());
+                    item.setPriceAtPurchase(cartItem.getPrice());
+                    return item;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
-        savedOrder.setOrderItems(orderItems);
-        orderServiceRepository.save(savedOrder);
+        order.setOrderItems(orderItems);
+        orderServiceRepository.save(order);
+    }
 
-        reduceProductStock(cart.getCartItems());
-
-        if (request.getPaymentMethod().equals(PaymentMethod.CASH_ON_DELIVERY)) {
-            paymentService.createPendingPayment(savedOrder, request.getPaymentMethod());
-        } else {
-            paymentService.processPaymentForOrder(savedOrder, request.getPaymentMethod());
+    private void reduceProductStock(List<CartItem> cartItems) {
+        for (CartItem cartItem : cartItems) {
+            Product product = allRepositoryMethods.getProductById(cartItem.getProduct().getId());
+            if (product.getStock() < cartItem.getQuantity()) {
+                throw new BadRequestException("Insufficient stock for: " + product.getName()
+                        + ". Available: " + product.getStock());
+            }
+            product.setStock(product.getStock() - cartItem.getQuantity());
+            productRepository.save(product);
         }
+    }
 
+    private void processPayment(Order order, PaymentMethod paymentMethod) {
+        if (paymentMethod == PaymentMethod.CASH_ON_DELIVERY) {
+            paymentService.createPendingPayment(order, paymentMethod);
+        } else {
+            paymentService.processPaymentForOrder(order, paymentMethod);
+        }
+    }
+
+    private void deactivateCart(Cart cart) {
         cart.setIsActive(false);
         cart.setUpdatedAt(LocalDateTime.now());
         cartRepository.save(cart);
-
-        var payment = paymentService.getPaymentByOrderId(savedOrder.getId());
-        return orderServiceMapper.toDto(savedOrder, convertToPaymentEntity(payment));
     }
 
-    @Override
-    public Page<OrderDTO> getAllOrders(int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("createdAt").descending());
-        Page<Order> orderPage = orderServiceRepository.findAll(pageable);
-        return orderPage.map(order -> {
-            var payment = paymentService.getPaymentByOrderId(order.getId());
-            return orderServiceMapper.toDto(order, convertToPaymentEntity(payment));
-        });
-    }
-
-    @Override
-    public OrderDTO getOrderById(Long id) {
-        Order order = orderServiceRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Order not found with id: " + id));
-        var payment = paymentService.getPaymentByOrderId(id);
-        return orderServiceMapper.toDto(order, convertToPaymentEntity(payment));
-    }
-
-    @Override
-    public Page<OrderDTO> getOrdersByUserId(Long userId, int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("createdAt").descending());
-        Page<Order> orderPage = orderServiceRepository.findByOrderItems_Order_Id(userId, pageable);
-        return orderPage.map(order -> {
-            var payment = paymentService.getPaymentByOrderId(order.getId());
-            return orderServiceMapper.toDto(order, convertToPaymentEntity(payment));
-        });
-    }
-
-    @Override
-    public Page<OrderDTO> getOrdersByStatus(String status, int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("createdAt").descending());
-        OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
-        Page<Order> orderPage = orderServiceRepository.findByStatus(orderStatus, pageable);
-        return orderPage.map(order -> {
-            var payment = paymentService.getPaymentByOrderId(order.getId());
-            return orderServiceMapper.toDto(order, convertToPaymentEntity(payment));
-        });
-    }
-
-    @Override
-    @Transactional
-    public OrderDTO updateOrderStatus(Long id, UpdateOrderStatusRequestDTO statusRequest) {
-        Order order = orderServiceRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Order not found with id: " + id));
-
-        OrderStatus newStatus = statusRequest.getStatus();
-        order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
-
-        if (newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.REFUNDED) {
-
-            for (OrderItem orderItem : order.getOrderItems()) {
-                Product product = orderItem.getProduct();
-                product.setStock(product.getStock() + orderItem.getQuantity());
-                productRepository.save(product);
-            }
-
-            if (paymentService.hasSuccessfulPayment(id)) {
-                paymentService.refundPaymentForOrder(id);
-            }
+    private void restoreStock(List<OrderItem> orderItems) {
+        for (OrderItem item : orderItems) {
+            Product product = item.getProduct();
+            product.setStock(product.getStock() + item.getQuantity());
+            productRepository.save(product);
         }
-
-        Order updatedOrder = orderServiceRepository.save(order);
-        var payment = paymentService.getPaymentByOrderId(id);
-        return orderServiceMapper.toDto(updatedOrder, convertToPaymentEntity(payment));
     }
 
-    @Override
-    @Transactional
-    public OrderDTO cancelOrder(Long id, String reason) {
-        Order order = orderServiceRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Order not found with id: " + id));
+    private void refundIfPaid(Long orderId) {
+        if (paymentService.hasSuccessfulPayment(orderId)) {
+            paymentService.refundPaymentForOrder(orderId);
+        }
+    }
 
+    private void validateCancellable(Order order) {
         if (order.getStatus() == OrderStatus.DELIVERED) {
-            throw new BadRequestException("Cannot cancel delivered order");
+            throw new BadRequestException("Cannot cancel a delivered order");
         }
-
         if (order.getStatus() == OrderStatus.CANCELLED) {
             throw new BadRequestException("Order is already cancelled");
         }
-
-        order.setStatus(OrderStatus.CANCELLED);
-        order.setUpdatedAt(LocalDateTime.now());
-
-        // Restore stock
-        for (OrderItem orderItem : order.getOrderItems()) {
-            Product product = orderItem.getProduct();
-            product.setStock(product.getStock() + orderItem.getQuantity());
-            productRepository.save(product);
-        }
-
-        Order cancelledOrder = orderServiceRepository.save(order);
-
-        if (paymentService.hasSuccessfulPayment(id)) {
-            paymentService.refundPaymentForOrder(id);
-        }
-
-        var payment = paymentService.getPaymentByOrderId(id);
-        return orderServiceMapper.toDto(cancelledOrder, convertToPaymentEntity(payment));
     }
 
-    @Override
-    @Transactional
-    public void deleteOrderById(Long id) {
-        Order order = orderServiceRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException("Order not found with id: " + id));
+    private void validateAddressHasActiveOrder(Long addressId) {
+        boolean hasActiveOrder = orderServiceRepository.existsByAddress_IdAndAddress_IsActiveTrueAndStatusIn(
+                addressId, Set.of(OrderStatus.PENDING, OrderStatus.CONFIRMED));
 
-        if (order.getStatus() != OrderStatus.CANCELLED && order.getStatus() != OrderStatus.REFUNDED) {
-            throw new BadRequestException("Only cancelled or refunded orders can be deleted");
+        if (!hasActiveOrder) {
+            throw new BadRequestException("Cannot modify address. No active order found for this address.");
         }
+    }
 
-        orderServiceRepository.delete(order);
+    private Order findOrderById(Long id) {
+        return orderServiceRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("Order not found with id: " + id));
+    }
+
+    private Order findActiveOrder(AddressUpdateRequestDTO request) {
+        return orderServiceRepository.findByIdAndStatusIn(
+                request.getOrderId(), Set.of(OrderStatus.PENDING, OrderStatus.CONFIRMED));
+    }
+
+    private OrderDTO mapOrderWithPayment(Order order) {
+        Payment payment = convertToPaymentEntity(paymentService.getPaymentByOrderId(order.getId()));
+        return orderServiceMapper.toDto(order, payment);
     }
 
     private Payment convertToPaymentEntity(PaymentDTO paymentDTO) {

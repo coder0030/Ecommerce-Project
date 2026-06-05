@@ -26,29 +26,12 @@ public class Order {
     private User user;
 
     @ManyToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
+
+    @ManyToOne
     @JoinColumn(name = "coupon_id", nullable = true)
     private Coupon coupon;
-
-    @Column(nullable = false)
-    private String deliveryName;
-
-    @Column(nullable = false)
-    private String deliveryPhone;
-
-    @Column(nullable = false)
-    private String deliveryStreet;
-
-    @Column(nullable = false)
-    private String deliveryCity;
-
-    @Column(nullable = false)
-    private String deliveryState;
-
-    @Column(nullable = false)
-    private String deliveryPincode;
-
-    @Column(nullable = false)
-    private String deliveryCountry;
 
     @Column(nullable = false)
     private Double totalAmount;

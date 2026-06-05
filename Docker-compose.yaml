@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_cnt
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DOCKER_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DOCKER_MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${DOCKER_MYSQL_USER_PASSWORD}
+      MYSQL_USER: ${DOCKER_MYSQL_USER}
+
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./cart_mysql_data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 12s
+      retries: 5
+      interval: 5s
+
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce_cnt
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${DOCKER_MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_OAUTH2_GOOLE_CLIENT_ID: ${SPRING_GOOGLE_CLIENT_ID}
+      SPRING_OAUTH2_GOOGLE_CLIENT_SECRET: ${SPRING_GOOGLE_CLIENT_SECRET}
+      SPRING_OAUTH2_GITHUB_CLIENT_ID: ${SPRING_GITHUB_CLIENT_ID}
+      SPRING_OAUTH2_GITHUB_CLIENT_SECRET: ${SPRING_GITHUB_CLIENT_SECRET}
+      SPRING_JWT_SECRET: ${JWT_SECRET_KEY}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+networks:
+  app_network:
+    driver: bridge
+
+
+
+

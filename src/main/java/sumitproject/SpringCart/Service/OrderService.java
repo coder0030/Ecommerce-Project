@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import sumitproject.SpringCart.DTO.OrderDTO;
+import sumitproject.SpringCart.RequestDTO.AddressUpdateRequestDTO;
 import sumitproject.SpringCart.RequestDTO.OrderRequestDTO;
 import sumitproject.SpringCart.RequestDTO.UpdateOrderStatusRequestDTO;
 
@@ -24,4 +25,8 @@ public interface OrderService {
     OrderDTO cancelOrder(Long id, String reason);
 
     void deleteOrderById(Long id);
+
+    void deleteAddressById(Long userId, AddressUpdateRequestDTO request);
+
+    void updateAddress(Long userId, AddressUpdateRequestDTO request);
 }

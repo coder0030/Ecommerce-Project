@@ -55,8 +55,8 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         Review review = new Review();
-        review.setUser(user);
-        review.setProduct(product);
+        user.addReview(review);
+        product.addReview(review);
         review.setRating(request.getRating());
         review.setComment(request.getComment());
 

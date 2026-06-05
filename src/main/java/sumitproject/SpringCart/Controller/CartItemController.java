@@ -1,5 +1,9 @@
 package sumitproject.SpringCart.Controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,11 +21,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cart-items")
 @RequiredArgsConstructor
+@Tag(name = "Cart Items", description = "Manage items inside shopping carts")
 @PreAuthorize("hasRole('CUSTOMER')")
 public class CartItemController {
 
     private final CartItemService cartItemService;
 
+    @Operation(summary = "Get cart item by ID", description = "Retrieves a specific cart item (Admin only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cart item retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart item not found")
+    })
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CartItemDTO> getCartItemById(@PathVariable Long id) {
@@ -29,6 +39,12 @@ public class CartItemController {
         return ResponseEntity.ok(cartItem);
     }
 
+    @Operation(summary = "Add item to cart", description = "Adds a single item to the specified cart")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Item added successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "404", description = "Cart or product not found")
+    })
     @PostMapping("/cart/{cartId}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.cartVerify(#cartId, authentication)")
     public ResponseEntity<CartItemDTO> addItemToCart(
@@ -38,6 +54,12 @@ public class CartItemController {
         return new ResponseEntity<>(addedItem, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Add multiple items to cart", description = "Adds multiple items to the specified cart in bulk")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Items added successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "404", description = "Cart or product not found")
+    })
     @PostMapping("/cart/{cartId}/bulk")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.cartVerify(#cartId, authentication)")
     public ResponseEntity<List<CartItemDTO>> addItemsToCartBulk(
@@ -47,6 +69,12 @@ public class CartItemController {
         return new ResponseEntity<>(addedItems, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Update cart item", description = "Updates an existing cart item")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cart item updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "404", description = "Cart item not found")
+    })
     @PutMapping("/{cartItemId}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.verifyItem(#updateRequest.cartItemId, authentication)")
     public ResponseEntity<CartItemDTO> updateCartItem(
@@ -57,6 +85,12 @@ public class CartItemController {
         return ResponseEntity.ok(updatedItem);
     }
 
+    @Operation(summary = "Update cart item quantity", description = "Updates only the quantity of a cart item")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Quantity updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid quantity"),
+            @ApiResponse(responseCode = "404", description = "Cart item not found")
+    })
     @PutMapping("/{cartItemId}/quantity")
     @PreAuthorize("hasAnyRole('ADMIN','CUSTOMER')")
     public ResponseEntity<CartItemDTO> updateCartItemQuantity(
@@ -66,6 +100,11 @@ public class CartItemController {
         return ResponseEntity.ok(updatedItem);
     }
 
+    @Operation(summary = "Delete cart item", description = "Removes a specific item from cart")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Cart item deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart item not found")
+    })
     @DeleteMapping("/{cartItemId}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.verifyItem(#id, authentication)")
     public ResponseEntity<Void> deleteCartItem(@PathVariable Long cartItemId) {
@@ -73,6 +112,11 @@ public class CartItemController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Get all items in cart", description = "Retrieves paginated list of items in a cart")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Items retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart not found")
+    })
     @GetMapping("/cart/{cartId}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.cartVerify(#cartId, authentication)")
     public ResponseEntity<Page<CartItemDTO>> getCartItemsByCartId(
@@ -83,6 +127,11 @@ public class CartItemController {
         return ResponseEntity.ok(cartItems);
     }
 
+    @Operation(summary = "Get cart item by cart and product", description = "Retrieves a specific cart item")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cart item retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart item not found")
+    })
     @GetMapping("/cart/{cartId}/product/{productId}")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.cartVerify(#cartId, authentication)")
     public ResponseEntity<CartItemDTO> getCartItemByCartAndProduct(
@@ -92,6 +141,11 @@ public class CartItemController {
         return ResponseEntity.ok(cartItem);
     }
 
+    @Operation(summary = "Delete all cart items", description = "Removes all items from a cart")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "All items deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart not found")
+    })
     @DeleteMapping("/cart/{cartId}/all")
     @PreAuthorize("hasRole('ADMIN') or @cartOwnerCheck.verify(#cartId, authentication)")
     public ResponseEntity<Void> deleteAllCartItemsByCartId(@PathVariable Long cartId) {
@@ -99,6 +153,11 @@ public class CartItemController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Get cart item count", description = "Returns total number of items in a cart")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Count retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart not found")
+    })
     @GetMapping("/cart/{cartId}/count")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.cartVerify(#cartId, authentication)")
     public ResponseEntity<Integer> getCartItemCountByCartId(@PathVariable Long cartId) {
@@ -106,6 +165,11 @@ public class CartItemController {
         return ResponseEntity.ok(count);
     }
 
+    @Operation(summary = "Get cart item subtotal", description = "Calculates subtotal for a single cart item")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Subtotal calculated successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart item not found")
+    })
     @GetMapping("/{cartItemId}/subtotal")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.verifyItem(#id, authentication)")
     public ResponseEntity<Double> getCartItemSubtotal(@PathVariable Long cartItemId) {
@@ -113,6 +177,11 @@ public class CartItemController {
         return ResponseEntity.ok(subtotal);
     }
 
+    @Operation(summary = "Check if product is in cart", description = "Checks whether a specific product exists in the cart")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Check completed successfully"),
+            @ApiResponse(responseCode = "404", description = "Cart not found")
+    })
     @GetMapping("/cart/{cartId}/product/{productId}/exists")
     @PreAuthorize("hasRole('ADMIN') or @securityUtil.cartVerify(#cartId, authentication)")
     public ResponseEntity<Boolean> isProductInCart(

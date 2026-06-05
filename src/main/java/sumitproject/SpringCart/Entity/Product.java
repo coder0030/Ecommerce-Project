@@ -68,6 +68,16 @@ public class Product {
         cartItem.setProduct(null);
     }
 
+    public void addReview(Review review) {
+        reviews.add(review);
+        review.setProduct(this);
+    }
+
+    public void removeReview(Review review) {
+        reviews.remove(review);
+        review.setProduct(null);
+    }
+
     @PrePersist
     protected void setUp() {
         createdAt = LocalDateTime.now();
