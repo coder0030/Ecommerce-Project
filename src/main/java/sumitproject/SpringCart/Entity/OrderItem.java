@@ -9,7 +9,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "order_items")
+@Table(
+        name = "order_items", indexes = @Index(name = "orderItemId", columnList = "id")
+)
 public class OrderItem {
 
     @Id

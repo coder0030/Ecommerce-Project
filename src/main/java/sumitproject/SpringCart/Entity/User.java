@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Table(name = "users")
+@Table(
+        name = "users", indexes = @Index(name = "user_id", columnList = "id")
+)
 @Getter
 @Setter
 @Builder

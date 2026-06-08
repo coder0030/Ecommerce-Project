@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "cart_items", uniqueConstraints = {
+@Table(name = "cart_items", indexes = @Index(name = "cart_items_id",
+columnList = "id"),  uniqueConstraints = {
         @UniqueConstraint(columnNames = {"cart_id", "product_id"})
 })
 public class CartItem {

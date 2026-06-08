@@ -12,7 +12,9 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "products")
+@Table(
+        name = "products", indexes = @Index(name = "product1-id", columnList = "id")
+)
 public class Product {
 
     @Id
