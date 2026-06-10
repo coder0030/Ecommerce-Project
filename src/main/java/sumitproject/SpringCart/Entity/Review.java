@@ -1,7 +1,7 @@
 package sumitproject.SpringCart.Entity;
-import jakarta.persistence.Entity;
-import lombok.*;
+
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
