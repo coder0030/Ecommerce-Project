@@ -37,12 +37,11 @@ public class AuthService {
             throw new BadRequestException("User already exists with email: " + signupRequestDTO.getUsername());
         }
 
-        User user = User.builder()
-                .email(signupRequestDTO.getUsername())
-                .password(passwordEncoder.encode(signupRequestDTO.getPassword()))
-                .roles(Set.of(Role.CUSTOMER))
-                .provider(Set.of(AuthProviderType.LOCAL))
-                .build();
+        User user = new User();
+        user.setEmail(signupRequestDTO.getUsername());
+        user.setPassword(passwordEncoder.encode(signupRequestDTO.getPassword()));
+        user.setRoles(Set.of(Role.CUSTOMER));
+        user.setProvider(Set.of(AuthProviderType.LOCAL));
 
         User saved = userRepository.save(user);
         return new SignupResponseDTO(saved.getId(), saved.getEmail());

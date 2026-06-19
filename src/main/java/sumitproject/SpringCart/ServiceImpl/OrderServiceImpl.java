@@ -305,13 +305,15 @@ public class OrderServiceImpl implements OrderService {
 
     private Payment convertToPaymentEntity(PaymentDTO paymentDTO) {
         if (paymentDTO == null) return null;
-        return Payment.builder()
-                .id(paymentDTO.getId())
-                .amount(paymentDTO.getAmount())
-                .paymentMethod(paymentDTO.getPaymentMethod())
-                .status(paymentDTO.getStatus())
-                .transactionId(paymentDTO.getTransactionId())
-                .paidAt(paymentDTO.getPaidAt())
-                .build();
+
+        Payment payment = new Payment();
+        payment.setId(paymentDTO.getId());
+        payment.setAmount(paymentDTO.getAmount());
+        payment.setPaymentMethod(paymentDTO.getPaymentMethod());
+        payment.setStatus(paymentDTO.getStatus());
+        payment.setTransactionId(paymentDTO.getTransactionId());
+        payment.setPaidAt(paymentDTO.getPaidAt());
+
+        return payment;
     }
 }

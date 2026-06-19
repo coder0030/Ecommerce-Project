@@ -13,7 +13,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(
-        name = "products", indexes = @Index(name = "product1-id", columnList = "id")
+        name = "products", indexes = @Index(name = "product1_id", columnList = "id")
 )
 public class Product {
 
@@ -52,9 +52,6 @@ public class Product {
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @JsonIgnore
     private Set<CartItem> cartItemList = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

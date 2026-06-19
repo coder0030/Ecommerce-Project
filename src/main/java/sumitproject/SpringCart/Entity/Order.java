@@ -10,7 +10,6 @@ import java.util.List;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -39,7 +38,6 @@ public class Order {
     private Double totalAmount;
 
     @Column(columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
-    @Builder.Default
     private Double discountAmount = 0.0;
 
     @Column(nullable = false)
@@ -47,7 +45,6 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
     private OrderStatus status = OrderStatus.PENDING;
 
     @Column(updatable = false)
@@ -56,7 +53,6 @@ public class Order {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @PrePersist

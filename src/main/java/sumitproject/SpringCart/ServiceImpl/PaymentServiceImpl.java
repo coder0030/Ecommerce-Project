@@ -64,14 +64,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDTO processSuccessfulPayment(Order order, PaymentMethod paymentMethod, String transactionId) {
-        Payment payment = Payment.builder()
-                .order(order)
-                .amount(order.getFinalAmount())
-                .paymentMethod(paymentMethod)
-                .status(PaymentStatus.SUCCESS)
-                .transactionId(transactionId)
-                .paidAt(LocalDateTime.now())
-                .build();
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(order.getFinalAmount());
+        payment.setPaymentMethod(paymentMethod);
+        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setTransactionId(transactionId);
+        payment.setPaidAt(LocalDateTime.now());
 
         Payment savedPayment = paymentRepository.save(payment);
         return paymentMapper.toDto(savedPayment);
@@ -79,12 +78,11 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDTO createPendingPayment(Order order, PaymentMethod paymentMethod) {
-        Payment payment = Payment.builder()
-                .order(order)
-                .amount(order.getFinalAmount())
-                .paymentMethod(paymentMethod)
-                .status(PaymentStatus.PENDING)
-                .build();
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(order.getFinalAmount());
+        payment.setPaymentMethod(paymentMethod);
+        payment.setStatus(PaymentStatus.PENDING);
 
         Payment savedPayment = paymentRepository.save(payment);
         return paymentMapper.toDto(savedPayment);
@@ -213,12 +211,11 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private Payment createPayment(Order order, PaymentRequestDTO request) {
-        Payment payment = Payment.builder()
-                .order(order)
-                .amount(request.getAmount())
-                .paymentMethod(request.getPaymentMethod())
-                .status(PaymentStatus.PENDING)
-                .build();
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(request.getAmount());
+        payment.setPaymentMethod(request.getPaymentMethod());
+        payment.setStatus(PaymentStatus.PENDING);
 
         if (!request.getPaymentMethod().equals(PaymentMethod.CASH_ON_DELIVERY)) {
             String transactionId = request.getTransactionId();
@@ -236,12 +233,11 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private Payment createPayment(Order order, PaymentMethod paymentMethod) {
-        Payment payment = Payment.builder()
-                .order(order)
-                .amount(order.getFinalAmount())
-                .paymentMethod(paymentMethod)
-                .status(PaymentStatus.PENDING)
-                .build();
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(order.getFinalAmount());
+        payment.setPaymentMethod(paymentMethod);
+        payment.setStatus(PaymentStatus.PENDING);
 
         if (!paymentMethod.equals(PaymentMethod.CASH_ON_DELIVERY)) {
             String transactionId = appConfig.generateTransactionId(

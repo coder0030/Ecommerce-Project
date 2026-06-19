@@ -46,11 +46,12 @@ public class OrderItemMapper {
                               sumitproject.SpringCart.Entity.CartItem cartItem) {
         if (cartItem == null) return null;
 
-        return OrderItem.builder()
-                .order(order)
-                .product(cartItem.getProduct())
-                .quantity(cartItem.getQuantity())
-                .priceAtPurchase(cartItem.getPrice())
-                .build();
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setProduct(cartItem.getProduct());
+        orderItem.setQuantity(cartItem.getQuantity());
+        orderItem.setPriceAtPurchase(cartItem.getPrice());
+
+        return orderItem;
     }
 }

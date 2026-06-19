@@ -60,15 +60,20 @@ public class OAuth2UserService {
 
         if (optionalUser.isEmpty()) {
 
-            User newUser = User.builder()
-                    .email(email)
-                    .name(name != null ? name : email.split("@")[0])
-                    .password(null)
-                    .provider(new HashSet<>(Set.of(providerType)))
-                    .providerId(providerId)
-                    .roles(Set.of(Role.CUSTOMER))
-                    .isActive(true)
-                    .build();
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setName(name != null ? name : email.split("@")[0]);
+            newUser.setPassword(null);
+
+            Set<AuthProviderType> providerSet = new HashSet<>();
+            providerSet.add(providerType);
+            newUser.setProvider(providerSet);
+
+            newUser.setProviderId(providerId);
+
+            Set<Role> roles = new HashSet<>();
+            roles.add(Role.CUSTOMER);
+            newUser.setRoles(roles);
 
             return response(userRepository.save(newUser));
         }
